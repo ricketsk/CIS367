@@ -35,6 +35,18 @@ window.onload = function init() {
   window.addEventListener(
     "keydown",
     function (e) {
+    if (e.key == 37) {
+      dirs[0] = false;
+    } else if (e.key == 39) {
+      dirs[0] = true;
+    } else if (e.key == 38) {
+      dirs[1] = true;
+    } else if (e.key == 40) {
+      dirs[1] = false;
+    } else if (e.key == 32) {
+      dirs[0] = null;
+      dirs[1] = null;
+    }
     console.log("Keycode: " + e.key);
     },
     false
@@ -68,8 +80,14 @@ function render() {
   gl.clear(gl.COLOR_BUFFER_BIT);
   gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-  x += 0.1;
-  y += 0.1;
+  if (dirs[0] === true) // move right
+    x += 0.01;
+  else if (dirs[0] === false) // move left
+    x -= 0.01;
+  if (dirs[1] === true) // move up
+    y += 0.01;
+  else if (dirs[1] === false) // move down
+    y -= 0.01;
   gl.uniform1f(xLoc, x);
   gl.uniform1f(yLoc, y);
 

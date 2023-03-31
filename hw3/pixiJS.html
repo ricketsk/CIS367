@@ -1,0 +1,133 @@
+<!doctype html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.3/pixi.min.js"></script>
+</head>
+
+<body>
+    <script>
+        // Create the application helper and add its render target to the page
+        const app = new PIXI.Application({
+            width: 800,
+            height: 600,
+            backgroundColor: 0xf099bb,
+        });
+        document.body.appendChild(app.view);
+
+        let sprite, otherSprite;
+
+        const loader = new PIXI.Loader();
+        loader.add('sprite', 'player.png')
+            .add('other_sprite', 'slime.png')
+            .load(setup);
+
+        function setup() {
+            sprite = new PIXI.Sprite(loader.resources['sprite'].texture);
+            sprite.x = 400;
+            sprite.y = 300;
+            sprite.vx = 0;
+            sprite.vy = 0;
+            app.stage.addChild(sprite);
+
+            otherSprite = new PIXI.Sprite(loader.resources['other_sprite'].texture);
+            otherSprite.x = 200;
+            otherSprite.y = 200;
+            app.stage.addChild(otherSprite);
+        }
+
+        const LEFT = 37;
+        const UP = 38;
+        const RIGHT = 39;
+        const DOWN = 40;
+
+        const speed = 5;
+        const bounds = app.screen;
+
+        function onKeyDown(event) {
+            switch (event.keyCode) {
+                case LEFT:
+                    if (sprite.x > 0) {
+                        sprite.vx = -speed;
+                    }
+                    break;
+                case UP:
+                    if (sprite.y > 0) {
+                        sprite.vy = -speed;
+                    }
+                    break;
+                case RIGHT:
+                    if (sprite.x < bounds.width - sprite.width) {
+                        sprite.vx = speed;
+                    }
+                    break;
+                case DOWN:
+                    if (sprite.y < bounds.height - sprite.height) {
+                        sprite.vy = speed;
+                    }
+                    break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch (event.keyCode) {
+                case LEFT:
+                case RIGHT:
+                    if (sprite.x >= 0 && sprite.x <= bounds.width - sprite.width) {
+                        sprite.vx = 0;
+                    }
+                    break;
+                case UP:
+                case DOWN:
+                    if (sprite.y >= 0 && sprite.y <= bounds.height - sprite.height) {
+                        sprite.vy = 0;
+                    }
+                    break;
+            }
+        }
+
+
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+
+        function hitTestRectangle(spriteA, spriteB) {
+            const a = spriteA.getBounds();
+            const b = spriteB.getBounds();
+
+            return a.x + a.width > b.x &&
+                a.x < b.x + b.width &&
+                a.y + a.height > b.y &&
+                a.y < b.y + b.height;
+        }
+
+        app.ticker.add(() => {
+            if (!sprite || !otherSprite) {
+                return;
+            }
+
+            sprite.x += sprite.vx;
+            sprite.y += sprite.vy;
+
+            if (sprite.x < 0) {
+                sprite.x = 0;
+            } else if (sprite.x > bounds.width) {
+                sprite.x = bounds.width;
+            }
+
+            if (sprite.y < 0) {
+                sprite.y = 0;
+            } else if (sprite.y > bounds.height) {
+                sprite.y = bounds.height;
+            }
+
+            if (hitTestRectangle(sprite, otherSprite)) {
+                otherSprite.visible = false;
+            }
+        });
+
+
+    </script>
+</body>
+
+</html>

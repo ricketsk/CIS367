@@ -1,0 +1,258 @@
+<!doctype html>
+<html>
+
+<head>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/5.3.3/pixi.min.js"></script>
+</head>
+
+<body>
+    <script>
+        // Create the application helper and add its render target to the page
+        const app = new PIXI.Application({
+            width: 800,
+            height: 600,
+            // backgroundColor: 0xf099bb,
+        });
+        document.body.appendChild(app.view);
+
+        let sprite, otherSprite;
+        const walls = [];
+        const textures = [];
+
+        const loader = new PIXI.Loader();
+        loader.add('sprite', 'images/player.png')
+            .add('other_sprite', 'images/slime.png')
+            .add('floor_1', 'images/floor/floor_1.png')
+            .add('floor_2', 'images/floor/floor_2.png')
+            .add('floor_3', 'images/floor/floor_3.png')
+            .add('floor_4', 'images/floor/floor_4.png')
+            .add('floor_5', 'images/floor/floor_5.png')
+            .add('floor_6', 'images/floor/floor_6.png')
+            .add('floor_7', 'images/floor/floor_7.png')
+            .add('floor_8', 'images/floor/floor_8.png')
+            .load(setup);
+
+        function setup() {
+
+            sprite = new PIXI.Sprite(loader.resources['sprite'].texture);
+            sprite.x = 400;
+            sprite.y = 300;
+            sprite.vx = 0;
+            sprite.vy = 0;
+            app.stage.addChild(sprite);
+
+            otherSprite = new PIXI.Sprite(loader.resources['other_sprite'].texture);
+            otherSprite.x = 200;
+            otherSprite.y = 200;
+            app.stage.addChild(otherSprite);
+
+            const textures = [loader.resources['floor_1'].texture,
+            loader.resources['floor_2'].texture,
+            loader.resources['floor_3'].texture,
+            loader.resources['floor_4'].texture,
+            loader.resources['floor_5'].texture,
+            loader.resources['floor_6'].texture,
+            loader.resources['floor_7'].texture,
+            loader.resources['floor_8'].texture
+            ];
+
+            const background = new PIXI.Container();
+            app.stage.addChild(background);
+
+            for (let x = 0; x < app.screen.width; x += 16) {
+                for (let y = 0; y < app.screen.height; y += 16) {
+                    const texture = textures[Math.floor(Math.random() * textures.length)];
+                    const sprite = new PIXI.Sprite(texture);
+                    sprite.x = x;
+                    sprite.y = y;
+                    background.addChild(sprite);
+                }
+            }
+        }
+
+        loader.onComplete.add(() => {
+            textures.push(loader.resources['floor_1'].texture);
+            textures.push(loader.resources['floor_2'].texture);
+            textures.push(loader.resources['floor_3'].texture);
+            textures.push(loader.resources['floor_4'].texture);
+            textures.push(loader.resources['floor_5'].texture);
+            textures.push(loader.resources['floor_6'].texture);
+            textures.push(loader.resources['floor_7'].texture);
+            textures.push(loader.resources['floor_8'].texture);
+
+            const background = new PIXI.Container();
+            app.stage.addChild(background);
+
+            for (let x = 0; x < app.screen.width; x++) {
+                for (let y = 0; y < app.screen.height; y++) {
+                    const texture = textures[Math.floor(Math.random() * textures.length)];
+                    const sprite = new PIXI.Sprite(texture);
+                    sprite.x = x;
+                    sprite.y = y;
+                    background.addChild(sprite);
+                }
+            }
+        });
+
+
+        const LEFT = 37;
+        const UP = 38;
+        const RIGHT = 39;
+        const DOWN = 40;
+
+        const speed = 5;
+        const bounds = app.screen;
+
+        function onKeyDown(event) {
+            switch (event.keyCode) {
+                case LEFT:
+                    if (sprite.x > 0) {
+                        sprite.vx = -speed;
+                    }
+                    break;
+                case UP:
+                    if (sprite.y > 0) {
+                        sprite.vy = -speed;
+                    }
+                    break;
+                case RIGHT:
+                    if (sprite.x < bounds.width - sprite.width) {
+                        sprite.vx = speed;
+                    }
+                    break;
+                case DOWN:
+                    if (sprite.y < bounds.height - sprite.height) {
+                        sprite.vy = speed;
+                    }
+                    break;
+            }
+        }
+
+        function onKeyUp(event) {
+            switch (event.keyCode) {
+                case LEFT:
+                case RIGHT:
+                    if (sprite.x >= 0 && sprite.x <= bounds.width - sprite.width) {
+                        sprite.vx = 0;
+                    }
+                    break;
+                case UP:
+                case DOWN:
+                    if (sprite.y >= 0 && sprite.y <= bounds.height - sprite.height) {
+                        sprite.vy = 0;
+                    }
+                    break;
+            }
+        }
+
+        document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
+
+        const wallWidth = 10;
+        const wallHeight = 10;
+
+        function createWall(x, y, width, height, color, edge = false) {
+            const wall = new PIXI.Graphics();
+            wall.beginFill(color);
+            wall.drawRect(x, y, width, height);
+            wall.endFill();
+            app.stage.addChild(wall);
+            walls.push(wall);
+            if (!edge) {
+                wall.interactive = true;
+                wall.buttonMode = true;
+                wall.on('pointerdown', () => {
+                    app.stage.removeChild(wall);
+                    walls.splice(walls.indexOf(wall), 1);
+                });
+            }
+        }
+
+        createWall(0, 0, app.screen.width, wallHeight / 2, 0x000000, true); // top wall
+        createWall(0, app.screen.height - (wallHeight / 2), app.screen.width, wallHeight / 2, 0x000000, true); // bottom wall
+        createWall(0, wallHeight / 2, wallWidth / 2, app.screen.height - wallHeight, 0x000000, true); // left wall
+        createWall(app.screen.width - (wallWidth / 2), wallHeight / 2, wallWidth / 2, app.screen.height - wallHeight, 0x000000, true); // right wall
+
+        // for (let i = 0; i < 20; i++) {
+        //     let x, y, width, height;
+        //     do {
+        //         x = Math.floor(Math.random() * (app.screen.width - (2 * wallWidth) - wallWidth + 1)) + wallWidth;
+        //         y = Math.floor(Math.random() * (app.screen.height - (2 * wallHeight) - wallHeight + 1)) + wallHeight;
+        //         width = Math.floor(Math.random() * (150 - 50 + 1)) + 50;
+        //         height = Math.floor(Math.random() * (100 - 20 + 1)) + 20;
+        //     } while (checkOverlap(x, y, width, height));
+
+        //     createWall(x, y, width, height, 0x000000);
+        // }
+
+        // function checkOverlap(x, y, width, height) {
+        //     for (const wall of walls) {
+        //         const wallBounds = wall.getBounds();
+        //         if (
+        //             x + width > wallBounds.x &&
+        //             x < wallBounds.x + wallBounds.width &&
+        //             y + height > wallBounds.y &&
+        //             y < wallBounds.y + wallBounds.height
+        //         ) {
+        //             return true;
+        //         }
+        //     }
+        //     return false;
+        // }
+
+        function hitTestRectangle(sprite, walls) {
+            let collision = false;
+            for (let i = 0; i < walls.length; i++) {
+                const wall = walls[i];
+                const spriteBounds = sprite.getBounds();
+                const wallBounds = wall.getBounds();
+
+                if (
+                    spriteBounds.x + spriteBounds.width > wallBounds.x &&
+                    spriteBounds.x < wallBounds.x + wallBounds.width &&
+                    spriteBounds.y + spriteBounds.height > wallBounds.y &&
+                    spriteBounds.y < wallBounds.y + wallBounds.height
+                ) {
+                    collision = true;
+                    break;
+                }
+            }
+            return collision;
+        }
+
+
+        app.ticker.add(() => {
+            if (!sprite || !otherSprite) {
+                return;
+            }
+
+            sprite.x += sprite.vx;
+            sprite.y += sprite.vy;
+
+            if (hitTestRectangle(sprite, walls)) { // Pass walls array as parameter
+                // move the sprite back to its previous position to prevent it from passing through the wall
+                sprite.x -= sprite.vx;
+                sprite.y -= sprite.vy;
+            }
+
+            if (sprite.x < 0) {
+                sprite.x = 0;
+            } else if (sprite.x > bounds.width) {
+                sprite.x = bounds.width;
+            }
+
+            if (sprite.y < 0) {
+                sprite.y = 0;
+            } else if (sprite.y > bounds.height) {
+                sprite.y = bounds.height;
+            }
+
+            if (hitTestRectangle(sprite, otherSprite)) {
+                otherSprite.visible = false;
+            }
+        });
+
+    </script>
+</body>
+
+</html>

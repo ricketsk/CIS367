@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 
 <head>
@@ -11,247 +11,242 @@
         const app = new PIXI.Application({
             width: 800,
             height: 600,
-            // backgroundColor: 0xf099bb,
+            backgroundColor: 0xf099bb,
         });
         document.body.appendChild(app.view);
 
-        let sprite, otherSprite;
-        const walls = [];
-        const textures = [];
+        const SCORE_LIMIT = 100; // Set the score limit to 10, for example
 
-        const loader = new PIXI.Loader();
-        loader.add('sprite', 'images/player.png')
-            .add('other_sprite', 'images/slime.png')
-            .add('floor_1', 'images/floor/floor_1.png')
-            .add('floor_2', 'images/floor/floor_2.png')
-            .add('floor_3', 'images/floor/floor_3.png')
-            .add('floor_4', 'images/floor/floor_4.png')
-            .add('floor_5', 'images/floor/floor_5.png')
-            .add('floor_6', 'images/floor/floor_6.png')
-            .add('floor_7', 'images/floor/floor_7.png')
-            .add('floor_8', 'images/floor/floor_8.png')
-            .load(setup);
+        // Create the user-controlled sprite
+        const userSprite = PIXI.Sprite.from("images/player.png");
+        userSprite.x = app.view.width / 2;
+        userSprite.y = app.view.height / 2;
+        app.stage.addChild(userSprite);
 
-        function setup() {
+        // Create the enemy sprites
+        const enemy1 = PIXI.Sprite.from("images/slime.png");
+        enemy1.x = Math.random() * app.view.width;
+        enemy1.y = Math.random() * app.view.height;
+        app.stage.addChild(enemy1);
 
-            sprite = new PIXI.Sprite(loader.resources['sprite'].texture);
-            sprite.x = 400;
-            sprite.y = 300;
-            sprite.vx = 0;
-            sprite.vy = 0;
-            app.stage.addChild(sprite);
+        const enemy2 = PIXI.Sprite.from("images/slime.png");
+        enemy2.x = Math.random() * app.view.width;
+        enemy2.y = Math.random() * app.view.height;
+        app.stage.addChild(enemy2);
 
-            otherSprite = new PIXI.Sprite(loader.resources['other_sprite'].texture);
-            otherSprite.x = 200;
-            otherSprite.y = 200;
-            app.stage.addChild(otherSprite);
+        const enemy3 = PIXI.Sprite.from("images/slime.png");
+        enemy3.x = Math.random() * app.view.width;
+        enemy3.y = Math.random() * app.view.height;
+        app.stage.addChild(enemy3);
 
-            const textures = [loader.resources['floor_1'].texture,
-            loader.resources['floor_2'].texture,
-            loader.resources['floor_3'].texture,
-            loader.resources['floor_4'].texture,
-            loader.resources['floor_5'].texture,
-            loader.resources['floor_6'].texture,
-            loader.resources['floor_7'].texture,
-            loader.resources['floor_8'].texture
-            ];
+        const enemy4 = PIXI.Sprite.from("images/slime.png");
+        enemy4.x = Math.random() * app.view.width;
+        enemy4.y = Math.random() * app.view.height;
+        app.stage.addChild(enemy4);
 
-            const background = new PIXI.Container();
-            app.stage.addChild(background);
+        const enemy5 = PIXI.Sprite.from("images/slime.png");
+        enemy5.x = Math.random() * app.view.width;
+        enemy5.y = Math.random() * app.view.height;
+        app.stage.addChild(enemy5);
 
-            for (let x = 0; x < app.screen.width; x += 16) {
-                for (let y = 0; y < app.screen.height; y += 16) {
-                    const texture = textures[Math.floor(Math.random() * textures.length)];
-                    const sprite = new PIXI.Sprite(texture);
-                    sprite.x = x;
-                    sprite.y = y;
-                    background.addChild(sprite);
-                }
-            }
-        }
+        const goalSprite = new PIXI.Graphics();
+        goalSprite.lineStyle(2, 0xFFD700);
+        goalSprite.drawCircle(0, 0, 50);
+        goalSprite.x = Math.random() * app.view.width;
+        goalSprite.y = Math.random() * app.view.height;
+        goalSprite.isWall = false; // Add isWall property
+        app.stage.addChild(goalSprite);
 
-        loader.onComplete.add(() => {
-            textures.push(loader.resources['floor_1'].texture);
-            textures.push(loader.resources['floor_2'].texture);
-            textures.push(loader.resources['floor_3'].texture);
-            textures.push(loader.resources['floor_4'].texture);
-            textures.push(loader.resources['floor_5'].texture);
-            textures.push(loader.resources['floor_6'].texture);
-            textures.push(loader.resources['floor_7'].texture);
-            textures.push(loader.resources['floor_8'].texture);
+        // Set the initial score
+        let score = 0;
 
-            const background = new PIXI.Container();
-            app.stage.addChild(background);
+        // Create the score text
+        const scoreText = new PIXI.Text('Score: 0');
+        scoreText.x = 10;
+        scoreText.y = 10;
+        app.stage.addChild(scoreText);
 
-            for (let x = 0; x < app.screen.width; x++) {
-                for (let y = 0; y < app.screen.height; y++) {
-                    const texture = textures[Math.floor(Math.random() * textures.length)];
-                    const sprite = new PIXI.Sprite(texture);
-                    sprite.x = x;
-                    sprite.y = y;
-                    background.addChild(sprite);
-                }
+        // Set the initial health
+        let health = 100;
+
+        // Create the health text
+        const healthText = new PIXI.Text(`Health: ${health}`);
+        healthText.x = 10;
+        healthText.y = 30;
+        app.stage.addChild(healthText);
+
+        // Set up keyboard input handling
+        const LEFT_KEY = 37;
+        const UP_KEY = 38;
+        const RIGHT_KEY = 39;
+        const DOWN_KEY = 40;
+
+        const velocity = 3; // Speed at which the player moves
+        const enemyVelocity = 2; // Speed at which the enemy moves
+
+        const keys = {
+            [LEFT_KEY]: false,
+            [UP_KEY]: false,
+            [RIGHT_KEY]: false,
+            [DOWN_KEY]: false,
+        };
+
+        document.addEventListener("keydown", (event) => {
+            if (event.keyCode in keys) {
+                keys[event.keyCode] = true;
             }
         });
 
-
-        const LEFT = 37;
-        const UP = 38;
-        const RIGHT = 39;
-        const DOWN = 40;
-
-        const speed = 5;
-        const bounds = app.screen;
-
-        function onKeyDown(event) {
-            switch (event.keyCode) {
-                case LEFT:
-                    if (sprite.x > 0) {
-                        sprite.vx = -speed;
-                    }
-                    break;
-                case UP:
-                    if (sprite.y > 0) {
-                        sprite.vy = -speed;
-                    }
-                    break;
-                case RIGHT:
-                    if (sprite.x < bounds.width - sprite.width) {
-                        sprite.vx = speed;
-                    }
-                    break;
-                case DOWN:
-                    if (sprite.y < bounds.height - sprite.height) {
-                        sprite.vy = speed;
-                    }
-                    break;
+        document.addEventListener("keyup", (event) => {
+            if (event.keyCode in keys) {
+                keys[event.keyCode] = false;
             }
-        }
+        });
 
-        function onKeyUp(event) {
-            switch (event.keyCode) {
-                case LEFT:
-                case RIGHT:
-                    if (sprite.x >= 0 && sprite.x <= bounds.width - sprite.width) {
-                        sprite.vx = 0;
-                    }
-                    break;
-                case UP:
-                case DOWN:
-                    if (sprite.y >= 0 && sprite.y <= bounds.height - sprite.height) {
-                        sprite.vy = 0;
-                    }
-                    break;
-            }
-        }
-
-        document.addEventListener('keydown', onKeyDown);
-        document.addEventListener('keyup', onKeyUp);
-
-        const wallWidth = 10;
-        const wallHeight = 10;
-
-        function createWall(x, y, width, height, color, edge = false) {
-            const wall = new PIXI.Graphics();
-            wall.beginFill(color);
-            wall.drawRect(x, y, width, height);
-            wall.endFill();
-            app.stage.addChild(wall);
-            walls.push(wall);
-            if (!edge) {
-                wall.interactive = true;
-                wall.buttonMode = true;
-                wall.on('pointerdown', () => {
-                    app.stage.removeChild(wall);
-                    walls.splice(walls.indexOf(wall), 1);
-                });
-            }
-        }
-
-        createWall(0, 0, app.screen.width, wallHeight / 2, 0x000000, true); // top wall
-        createWall(0, app.screen.height - (wallHeight / 2), app.screen.width, wallHeight / 2, 0x000000, true); // bottom wall
-        createWall(0, wallHeight / 2, wallWidth / 2, app.screen.height - wallHeight, 0x000000, true); // left wall
-        createWall(app.screen.width - (wallWidth / 2), wallHeight / 2, wallWidth / 2, app.screen.height - wallHeight, 0x000000, true); // right wall
-
-        // for (let i = 0; i < 20; i++) {
-        //     let x, y, width, height;
-        //     do {
-        //         x = Math.floor(Math.random() * (app.screen.width - (2 * wallWidth) - wallWidth + 1)) + wallWidth;
-        //         y = Math.floor(Math.random() * (app.screen.height - (2 * wallHeight) - wallHeight + 1)) + wallHeight;
-        //         width = Math.floor(Math.random() * (150 - 50 + 1)) + 50;
-        //         height = Math.floor(Math.random() * (100 - 20 + 1)) + 20;
-        //     } while (checkOverlap(x, y, width, height));
-
-        //     createWall(x, y, width, height, 0x000000);
-        // }
-
-        // function checkOverlap(x, y, width, height) {
-        //     for (const wall of walls) {
-        //         const wallBounds = wall.getBounds();
-        //         if (
-        //             x + width > wallBounds.x &&
-        //             x < wallBounds.x + wallBounds.width &&
-        //             y + height > wallBounds.y &&
-        //             y < wallBounds.y + wallBounds.height
-        //         ) {
-        //             return true;
-        //         }
-        //     }
-        //     return false;
-        // }
-
-        function hitTestRectangle(sprite, walls) {
-            let collision = false;
-            for (let i = 0; i < walls.length; i++) {
-                const wall = walls[i];
-                const spriteBounds = sprite.getBounds();
-                const wallBounds = wall.getBounds();
-
-                if (
-                    spriteBounds.x + spriteBounds.width > wallBounds.x &&
-                    spriteBounds.x < wallBounds.x + wallBounds.width &&
-                    spriteBounds.y + spriteBounds.height > wallBounds.y &&
-                    spriteBounds.y < wallBounds.y + wallBounds.height
-                ) {
-                    collision = true;
-                    break;
-                }
-            }
-            return collision;
-        }
-
-
+        // Move the player sprite based on keyboard input
         app.ticker.add(() => {
-            if (!sprite || !otherSprite) {
-                return;
+            let prevX = userSprite.x;
+            let prevY = userSprite.y;
+            if (keys[LEFT_KEY] && userSprite.x > 0) {
+                userSprite.x -= velocity;
+            }
+            if (keys[UP_KEY] && userSprite.y > 0) {
+                userSprite.y -= velocity;
+            }
+            if (keys[RIGHT_KEY] && userSprite.x < app.view.width) {
+                userSprite.x += velocity;
+            }
+            if (keys[DOWN_KEY] && userSprite.y < app.view.height) {
+                userSprite.y += velocity;
             }
 
-            sprite.x += sprite.vx;
-            sprite.y += sprite.vy;
+            // Check for collision with walls and move player back if there is a collision
+            const walls = app.stage.children.filter((child) => child.isWall);
+            walls.forEach((wall) => {
+                if (checkCollision(userSprite, wall)) {
+                    userSprite.x = prevX;
+                    userSprite.y = prevY;
+                }
+            });
 
-            if (hitTestRectangle(sprite, walls)) { // Pass walls array as parameter
-                // move the sprite back to its previous position to prevent it from passing through the wall
-                sprite.x -= sprite.vx;
-                sprite.y -= sprite.vy;
+            const maxWalls = 20;
+            // const walls = app.stage.children.filter((child) => child.isWall);
+            const numWalls = walls.length;
+
+            // Generate new walls if there are less than maxWalls on the stage
+            if (numWalls < maxWalls) {
+                const wall = new PIXI.Graphics();
+                wall.isWall = true;
+                wall.beginFill(0x000000);
+                wall.drawRect(0, 0, 50, 50);
+                wall.width = 40;
+                wall.height = 40;
+                wall.endFill();
+                wall.x = Math.random() * app.view.width;
+                wall.y = Math.random() * app.view.height;
+                wall.vx = Math.random() * 4 - 2; // random horizontal velocity between -2 and 2
+                wall.vy = Math.random() * 4 - 2; // random vertical velocity between -2 and 2
+                app.stage.addChild(wall);
+                walls.push(wall);
             }
 
-            if (sprite.x < 0) {
-                sprite.x = 0;
-            } else if (sprite.x > bounds.width) {
-                sprite.x = bounds.width;
-            }
+            // Make the enemies seek out the player if they are within a certain distance
+            const enemies = [enemy1, enemy2, enemy3, enemy4, enemy5]; // Include all five enemies
+            let dx;
+            let dy;
+            let angle;
+            enemies.forEach((enemy) => {
+                const distance = Math.sqrt(
+                    Math.pow(userSprite.x - enemy.x, 2) +
+                    Math.pow(userSprite.y - enemy.y, 2)
+                );
+                const randomX = Math.random() * app.view.width;
+                const randomY = Math.random() * app.view.height;
+                if (distance < 150) { // You can adjust the distance here
+                    dx = userSprite.x - enemy.x;
+                    dy = userSprite.y - enemy.y;
+                    angle = Math.atan2(dy, dx);
+                    enemy.x += Math.cos(angle) * enemyVelocity;
+                    enemy.y += Math.sin(angle) * enemyVelocity;
+                } else {
+                    
+                }
+            });
 
-            if (sprite.y < 0) {
-                sprite.y = 0;
-            } else if (sprite.y > bounds.height) {
-                sprite.y = bounds.height;
-            }
-
-            if (hitTestRectangle(sprite, otherSprite)) {
-                otherSprite.visible = false;
-            }
+            checkCollision(); // Check for collision at the end of the function
         });
 
+
+        // Detect collision between player and enemies
+        function checkCollision() {
+            const enemies = [enemy1, enemy2, enemy3, enemy4, enemy5];
+            enemies.forEach((enemy) => {
+                const dx = userSprite.x - enemy.x;
+                const dy = userSprite.y - enemy.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                if (distance < 10) { // adjust the collision distance here
+                    // Decrement the health
+                    health -= 10;
+                    if (health <= 0) {
+                        health = 0; // Avoid negative health values
+                        // TODO: Game over logic here
+                    }
+                    healthText.text = `Health: ${health}`;
+
+                    // Move the player back to its previous position
+                    userSprite.x = prevX;
+                    userSprite.y = prevY;
+
+                    // Move the collided enemy to a new random location
+                    enemy.x = Math.random() * app.view.width;
+                    enemy.y = Math.random() * app.view.height;
+                }
+            });
+
+            // Check for collision with the goal area
+            const dx = userSprite.x - goalSprite.x;
+            const dy = userSprite.y - goalSprite.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            if (distance < 50) {
+                // Increment the score
+                score++;
+                scoreText.text = `Score: ${score}`;
+
+                // Check if the score has reached the score limit
+                if (score === SCORE_LIMIT) {
+                    // Display a message that the player wins
+                    const winMessage = new PIXI.Text('You win!');
+                    winMessage.x = app.view.width / 2;
+                    winMessage.y = app.view.height / 2;
+                    app.stage.addChild(winMessage);
+
+                    // Refresh the level after a delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000); // Refresh after 3 seconds (3000 milliseconds)
+                }
+
+                // Move the goal to a new random position
+                goalSprite.x = Math.random() * app.view.width;
+                goalSprite.y = Math.random() * app.view.height;
+
+                // // Move the walls and enemies to new random positions
+                // walls.forEach(walls => {
+                //     walls.x = Math.random() * app.view.width;
+                //     walls.y = Math.random() * app.view.height;
+                // });
+                // enemySprites.forEach(enemySprite => {
+                //     enemySprite.x = Math.random() * app.view.width;
+                //     enemySprite.y = Math.random() * app.view.height;
+                // });
+            }
+        }
+
+        // Draw a border around the screen
+        const border = new PIXI.Graphics();
+        border.lineStyle(2, 0x000000, 1);
+        border.drawRect(0, 0, app.view.width, app.view.height);
+        app.stage.addChild(border);
     </script>
 </body>
 

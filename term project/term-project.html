@@ -184,6 +184,8 @@
                 const dx = userSprite.x - enemy.x;
                 const dy = userSprite.y - enemy.y;
                 const distance = Math.sqrt(dx * dx + dy * dy);
+                let prevX = userSprite.x;
+                let prevY = userSprite.y;
                 if (distance < 10) { // adjust the collision distance here
                     // Decrement the health
                     health -= 10;

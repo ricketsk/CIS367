@@ -16,6 +16,7 @@
         document.body.appendChild(app.view);
 
         const SCORE_LIMIT = 100; // Set the score limit to 10, for example
+        let isPaused = false;
 
         // Create the user-controlled sprite
         const userSprite = PIXI.Sprite.from("images/player.png");
@@ -49,6 +50,17 @@
         enemy5.y = Math.random() * app.view.height;
         app.stage.addChild(enemy5);
 
+        // Create the restart button
+        const restartButton = document.createElement('button');
+        restartButton.innerHTML = 'Restart';
+        restartButton.style.position = 'absolute';
+        restartButton.style.top = '50%';
+        restartButton.style.left = '50%';
+        restartButton.style.transform = 'translate(-50%, -50%)';
+        document.body.appendChild(restartButton);
+
+        restartButton.style.display = 'none';
+
         const goalSprite = new PIXI.Graphics();
         goalSprite.lineStyle(2, 0xFFD700);
         goalSprite.drawCircle(0, 0, 50);
@@ -64,6 +76,8 @@
         const scoreText = new PIXI.Text('Score: 0');
         scoreText.x = 10;
         scoreText.y = 10;
+        scoreText.style.fill = 0x0000ff; // Set the text color to blue
+        scoreText.zIndex = -1;
         app.stage.addChild(scoreText);
 
         // Set the initial health
@@ -73,7 +87,20 @@
         const healthText = new PIXI.Text(`Health: ${health}`);
         healthText.x = 10;
         healthText.y = 30;
+        healthText.style.fill = 0xff0000; // Set the text color to red
+        healthText.zIndex = -1;
         app.stage.addChild(healthText);
+
+        // Create a mask for the score and health text
+        const mask = new PIXI.Graphics();
+        mask.beginFill(0xFFFFFF);
+        mask.drawRect(0, 0, app.view.width, 60);
+        mask.endFill();
+        app.stage.addChild(mask);
+
+        // Set the mask for the score and health text
+        scoreText.mask = mask;
+        healthText.mask = mask;
 
         // Set up keyboard input handling
         const LEFT_KEY = 37;
@@ -105,6 +132,9 @@
 
         // Move the player sprite based on keyboard input
         app.ticker.add(() => {
+            if (isPaused) {
+                return;
+            }
             let prevX = userSprite.x;
             let prevY = userSprite.y;
             if (keys[LEFT_KEY] && userSprite.x > 0) {
@@ -169,13 +199,12 @@
                     enemy.x += Math.cos(angle) * enemyVelocity;
                     enemy.y += Math.sin(angle) * enemyVelocity;
                 } else {
-                    
+
                 }
             });
 
             checkCollision(); // Check for collision at the end of the function
         });
-
 
         // Detect collision between player and enemies
         function checkCollision() {
@@ -191,18 +220,44 @@
                     health -= 10;
                     if (health <= 0) {
                         health = 0; // Avoid negative health values
-                        // TODO: Game over logic here
+                        // Game over logic here
+                        alert("Game over! Your score is " + score);
+                        // Show the restart button
+                        restartButton.style.display = 'block';
+                        // Pause the game
+                        isPaused = true;
+                        // Reset the health and score
+                        health = 100;
+                        score = 0;
+                        healthText.text = `Health: ${health}`;
+                        scoreText.text = `Score: ${score}`;
+                        // Reset the player and enemies to their starting positions
+                        userSprite.x = app.view.width / 2;
+                        userSprite.y = app.view.height / 2;
+                        enemies.forEach((enemy) => {
+                            enemy.x = Math.random() * app.view.width;
+                            enemy.y = Math.random() * app.view.height;
+                        });
                     }
-                    healthText.text = `Health: ${health}`;
-
-                    // Move the player back to its previous position
-                    userSprite.x = prevX;
-                    userSprite.y = prevY;
-
-                    // Move the collided enemy to a new random location
-                    enemy.x = Math.random() * app.view.width;
-                    enemy.y = Math.random() * app.view.height;
+                    else {
+                        // Update the health text
+                        healthText.text = `Health: ${health}`;
+                        // Move the player back to its previous position
+                        userSprite.x = prevX;
+                        userSprite.y = prevY;
+                        // Move the collided enemy to a new random location
+                        enemy.x = Math.random() * app.view.width;
+                        enemy.y = Math.random() * app.view.height;
+                    }
                 }
+            });
+
+            // Attach click event handler to the restart button
+            restartButton.addEventListener('click', () => {
+                // Hide the restart button
+                restartButton.style.display = 'none';
+                // Unpause the game
+                isPaused = false;
             });
 
             // Check for collision with the goal area
@@ -231,16 +286,6 @@
                 // Move the goal to a new random position
                 goalSprite.x = Math.random() * app.view.width;
                 goalSprite.y = Math.random() * app.view.height;
-
-                // // Move the walls and enemies to new random positions
-                // walls.forEach(walls => {
-                //     walls.x = Math.random() * app.view.width;
-                //     walls.y = Math.random() * app.view.height;
-                // });
-                // enemySprites.forEach(enemySprite => {
-                //     enemySprite.x = Math.random() * app.view.width;
-                //     enemySprite.y = Math.random() * app.view.height;
-                // });
             }
         }
 
